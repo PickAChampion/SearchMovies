@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Movie Search App</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      background-color: #f0f0f0;
+    }
+    h1 {
+      text-align: center;
+    }
+    form {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    input[type="text"] {
+      width: 300px;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      margin-left: 0.5rem;
+      cursor: pointer;
+    }
+    #results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill,minmax(200px,1fr));
+      gap: 1.5rem;
+    }
+    .movie-card {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .movie-card img {
+      width: 150px;
+      border-radius: 6px;
+      margin-bottom: 1rem;
+    }
+    .movie-title {
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+    }
+    .movie-date {
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 1rem;
+    }
+    .movie-overview {
+      font-size: 0.9rem;
+      color: #333;
+    }
+    #error-message {
+      color: red;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Movie Search App</h1>
+
+  <form id="search-form">
+    <input type="text" id="query" placeholder="Enter movie title..." required />
+    <button type="submit">Search</button>
+  </form>
+
+  <div id="error-message"></div>
+
+  <div id="results"></div>
+
+  <script>
+    const apiKey = 'YOUR_TMDB_API_KEY'; // Replace this with your TMDb API key
+    const form = document.getElementById('search-form');
+    const queryInput = document.getElementById('query');
+    const resultsDiv = document.getElementById('results');
+    const errorMessage = document.getElementById('error-message');
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      const query = queryInput.value.trim();
+      errorMessage.textContent = '';
+      resultsDiv.innerHTML = '';
+
+      if (!query) {
+        errorMessage.textContent = 'Please enter a movie title.';
+        return;
+      }
+
+      searchMovies(query);
+    });
+
+    async function searchMovies(query) {
+      try {
+        // TMDb search endpoint
+        const url = `https://api.themoviedb.org/3/search/movie?api_key=${apiKey}&query=${encodeURIComponent(query)}`;
+
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const data = await response.json();
+
+        if (data.results.length === 0) {
+          errorMessage.textContent = 'No movies found. Try a different title.';
+          return;
+        }
+
+        displayMovies(data.results);
+
+      } catch (error) {
+        errorMessage.textContent = 'Failed to fetch movies. Please try again later.';
+        console.error('Error:', error);
+      }
+    }
+
+    function displayMovies(movies) {
+      resultsDiv.innerHTML = '';
+
+      movies.forEach(movie => {
+        const posterPath = movie.poster_path
+          ? `https://image.tmdb.org/t/p/w200${movie.poster_path}`
+          : 'https://via.placeholder.com/150x225?text=No+Image';
+
+        const movieCard = document.createElement('div');
+        movieCard.className = 'movie-card';
+
+        movieCard.innerHTML = `
+          <img src="${posterPath}" alt="Poster of ${movie.title}" />
+          <div class="movie-title">${movie.title}</div>
+          <div class="movie-date">${movie.release_date || 'Unknown release date'}</div>
+          <div class="movie-overview">${movie.overview || 'No description available.'}</div>
+        `;
+
+        resultsDiv.appendChild(movieCard);
+      });
+    }
+  </script>
+
+</body>
+</html>
